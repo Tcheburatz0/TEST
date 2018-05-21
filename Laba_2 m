@@ -1,0 +1,117 @@
+#include "lab2.h"
+#include <pthread.h>
+#include <semaphore.h>
+#include <vector>
+#include <iostream>
+
+const size_t semafors = 5;
+const size_t tread = 10;
+
+pthread_mutex_t mutex;
+sem_t sems[semafors];
+
+struct Thread
+{
+	Thread(char name, short duration, std::vector<size_t> Wait, std::vector<size_t> release) : name(name), duration(duration),
+	Wait(Wait), Release(release) 
+	{};
+	char name;
+	short duration;
+
+	std::vector<size_t> Wait;
+	std::vector<size_t> Release;
+
+	void wait(){
+		for(size_t i = 0; i < Wait.size(); ++i)
+		{
+		sem_wait(&sems[Wait[i]]);
+		}
+	}
+	void release(){
+		for(size_t i = 0; i < Release.size(); ++i)
+		{
+		sem_post(&sems[Release[i]]);
+		}
+	}
+};
+
+void* semo(void*);
+
+unsigned int lab2_task_number() 
+{
+    return 12;
+}
+
+int lab2_init()
+{
+
+
+
+
+	pthread_t threads[tread];
+	Thread mThread[tread] = { 
+	{'a', 1, {}, {0,0}}, 
+	{'b', 1, {0}, {2,2,2}}, 
+	{'c', 1, {0}, {1}}, 
+	{'d', 1, {1}, {2,2}},
+	{'e', 1, {2}, {3,3}},
+ 	{'f', 1, {2}, {1,1}}, 
+	{'g', 2, {2}, {2}}, 
+	{'h', 1, {3,2,1}, {3}}, 
+	{'i', 1, {3,2,1}, {4}}, 
+	{'k', 1, {4,3,2}, {}} 
+	};
+
+
+
+
+
+	pthread_mutex_init(&mutex, NULL);
+	
+	for(size_t i = 0; i < semafors; ++i)
+	{
+		sem_init(&sems[i], 0, 0);
+	}
+	
+	for(size_t i = 0; i < tread; ++i)
+	{
+		pthread_create(&threads[i], NULL, semo, &mThread[i]);
+	}
+	
+	for(size_t i = 0; i < tread; ++i)
+	{
+		pthread_join(threads[i], NULL);
+	}
+
+	std::cout << std::endl;
+	
+	pthread_mutex_destroy(&mutex);
+
+	
+	for(size_t i = 0; i < semafors; ++i)
+	{
+		sem_destroy(&sems[i]);
+	}
+
+	return 0;
+}
+
+void* semo(void* arg)
+{
+	Thread* thisThread = (Thread*)arg;
+
+	thisThread->wait();
+
+	for(size_t i = 0; i < (thisThread->duration * 3); ++i)
+	{
+		pthread_mutex_lock(&mutex);
+		std::cout << thisThread->name << std::flush;
+		pthread_mutex_unlock(&mutex);
+		sleep_ms(5);
+	}
+
+	thisThread->release();
+
+
+	return arg;
+}
