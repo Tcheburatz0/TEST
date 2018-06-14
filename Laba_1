@@ -1,0 +1,28 @@
+Исходный код программы с комментариями
+#!/bin/bash
+################
+# Конфигурация #
+################
+n=50 # количество последних строк
+of="results.xml" # название файла, в который производится вывод
+timestamps=($(tail -n $n dns-tunneling.log | awk '{print $4}')) # массив из
+дат в unixtime
+clientIPs=($(tail -n $n dns-tunneling.log | awk '{print $5}')) # массив из IP
+клиента
+clientPorts=($(tail -n $n dns-tunneling.log | awk '{print $6}')) # массив из
+портов клиента
+#################
+# Генерация XML #
+#################
+echo "<dnslog>" > $of
+# Прогон цикла по $n элементам массива
+for (( i=0; i < $n; i++ ))
+do
+echo "<row>" >> $of
+echo " <timestamp>"${timestamps[$i]}"</timestamp>" >> $of
+echo " <client_ip>"${clientIPs[$i]}"</client_ip>" >> $of
+echo " <client_port>"${clientPorts[$i]}"</client_port>" >> $of
+echo "</row>" >> $of
+done
+echo $"</dnslog>" >> $of
+3
